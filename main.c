@@ -4,7 +4,7 @@
 
 #define DATA_MAX_BEFORE_POINTERS 10
 #define COMMAND_MAX 50
-#define COMMAND_NAME_SIZE(type, member) sizeof(((type *)0)->member)
+#define UNDECLARED_STRUCT_MEMBER_SIZE(type, member) sizeof(((type *)0)->member)
 
 /* structs / types */
 
@@ -101,7 +101,7 @@ ListCommand* get_commands() {
 
 
 void user_interaction(ListCommand* commands) {
-	char* command = malloc(COMMAND_NAME_SIZE(Command, name));
+	char* command = malloc(UNDECLARED_STRUCT_MEMBER_SIZE(Command, name));
 	printf("\nPick up a command from the list above: ");
 	scanf("%s", command);
 
