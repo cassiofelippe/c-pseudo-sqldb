@@ -4,7 +4,7 @@
 
 #define DATA_MAX_BEFORE_POINTERS 10
 #define COMMAND_MAX 50
-
+#define COMMAND_NAME_SIZE(type, member) sizeof(((type *)0)->member)
 
 /* structs / types */
 
@@ -100,6 +100,35 @@ ListCommand* get_commands() {
 }
 
 
+void user_interaction(ListCommand* commands) {
+	char* command = malloc(COMMAND_NAME_SIZE(Command, name));
+	printf("\nPick up a command from the list above: ");
+	scanf("%s", command);
+
+	printf("\nYou chose %s", command);
+
+	// TODO reduce the code below to a filter funcion
+
+	Command* fcommand = NULL;
+	Command* aux = commands->first;
+
+	while (aux != NULL && aux->next != NULL) {
+		if (strcmp(aux->name, command) == 0) {
+			fcommand = aux;
+		}
+
+		aux = aux->next;
+	}
+
+	if (fcommand == NULL) {
+		printf("\nCommand not found!");
+	} else {
+		printf("\nSystem returned %d - %s", fcommand->cod, fcommand->name);
+	}
+
+}
+
+
 int main() {
 	int i = 0;
 
@@ -108,5 +137,8 @@ int main() {
 	ListCommand* commands = get_commands();
 
 	print_all_commands(commands);
+
+	user_interaction(commands);
 	
+	printf("\n");
 }
