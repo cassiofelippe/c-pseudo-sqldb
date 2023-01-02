@@ -5,10 +5,12 @@
 #include <dirent.h>
 #include <errno.h>
 
-#define DATA_MAX_BEFORE_POINTERS 10
-#define MAX_INPUT_SIZE 255
-#define COMMAND_MAX 50
-#define DB_ROW_MAX 255
+// DDL = Doubly-Linked-List
+
+#define DATA_MAX_BEFORE_POINTERS 10 // TODO use DLL
+#define MAX_INPUT_SIZE 255 // TODO use DLL
+#define COMMAND_MAX 50 // TODO use DLL
+#define DB_ROW_MAX 255 // TODO use DLL
 
 /* defined function to get the size of a struct member without declaring it */
 #define UNDECLARED_STRUCT_MEMBER_SIZE(type, member) sizeof(((type *)0)->member)
@@ -33,7 +35,7 @@ typedef struct {
 /* function declarations */
 ListCommand* get_commands();
 void input(char *str, int max_size, FILE *stream);
-DIR* get_dir(char *path);
+void query(char *attributes, char *database, char *filter);
 
 /* global vars */
 ListCommand* commands;
@@ -117,7 +119,7 @@ void user_interaction() {
     char *command = malloc(COMMAND_MAX);
     char *attributes = malloc(COMMAND_MAX);
     char *database = malloc(COMMAND_MAX);
-    char *comparison = malloc(COMMAND_MAX);
+    char *filter = malloc(COMMAND_MAX);
     
     int user_input_size = sizeof(char) * MAX_INPUT_SIZE;
     char *user_input = malloc(user_input_size);
@@ -149,8 +151,8 @@ void user_interaction() {
                 // where = token;
                 break;
             case 5:
-                comparison = token;
-                printf("comparison: %s\n", comparison);
+                filter = token;
+                printf("filter: %s\n", filter);
                 break;
         }
 
@@ -163,29 +165,40 @@ void user_interaction() {
 
     // TODO reduce the code below to a filter funcion
 
-    Command *fcommand = NULL;
+    Command *found_command = NULL;
     Command *aux = commands->first;
 
     while (aux != NULL && aux->next != NULL) {
         if (strcasecmp(aux->name, command) == 0) {
-            fcommand = aux;
+            found_command = aux;
         }
 
         aux = aux->next;
     }
 
-    if (fcommand == NULL) {
+    printf("\nfound command: %d - %s", found_command->cod, found_command->name);
+
+    if (found_command == NULL) {
         printf("\nCommand [%s] not found!", command);
+    } else {
+    	int swcommand = found_command->cod;
+    	switch (swcommand) {
+    		case 1: /* SELECT */
+    			printf("\nit is select!");
+    			query(attributes, database, filter);
+    			break;
+    	}
     }
 
-    /* checking database file */
-    char *path = "databases/test";
+}
+
+void query(char *attributes, char *database, char *filter) {
+	/* checking database file */
+    char *path = strcat("databases/", database);
     FILE *db = fopen(path, "r");
     char ch;
     char *header = malloc(sizeof(char) * DB_ROW_MAX);
-    char *rows = malloc(sizeof(char) * DB_ROW_MAX * DB_ROW_MAX);
-    // char header[255];
-    // char rows[255];
+    char rows[DB_ROW_MAX][DB_ROW_MAX];
 
     if (NULL == db) {
         printf("\nDatabase [%s] does not exist!", path);
@@ -193,8 +206,7 @@ void user_interaction() {
  
     printf("\ncontent of this file are \n");
  
-    i = 0;
-    int j = 0;
+    int i = -1, j = 0, isheader = 1;
 
     while (ch != EOF) {
         ch = fgetc(db);
@@ -207,55 +219,40 @@ void user_interaction() {
 
         if (ch == '\n') {
             printf("[ENTER]");
+            isheader = 0;
+
+            rows[i][j] = '\0';
+
             i++;
             j = -1;
-        } else {
+        } else if (ch != EOF) {
         	printf("<%d>", i);
-            if (i == 0) {
+            if (isheader == 1) {
                 header[j] = ch;
             } else {
-            	char *row = rows[i];
-                row[j] = ch;
+            	rows[i][j] = ch;
             }
         }
         j++;
-        // Checking if character is not EOF.
-        // If it is EOF stop reading.
     }
+
+    /* records how many rows there are */
+    int rows_length = i;
  
-    // Closing the file
+    /* closing the db table file */
     fclose(db);
 
-    printf("\nheader >> [%s]", header);
+    printf("\n%s", header);
 
-
-    DIR *dir = get_dir("./databases");
-    get_dir("/tmp");
-    get_dir(".");
+    for (i = 0; i <= rows_length; i++) {
+    	printf("\n%s", rows[i]);
+    }
 }
 
 void input(char *str, int max_size, FILE *stream) {
     fgets(str, max_size, stream);
     str[strlen(str) -1] = '\0';
 }
-
-DIR* get_dir(char *path) {
-    DIR* dir = opendir("mydir");
-    if (dir) {
-        /* Directory exists. */
-        printf("\nDirectory [%s] exists!", path);
-        // closedir(dir);
-    } else if (ENOENT == errno) {
-        /* Directory does not exist. */
-        printf("\nDirectory [%s] does not exist!", path);
-    } else {
-        /* opendir() failed for some other reason. */
-        printf("\nFailed to find the [%s] directory!", path);
-    }
-
-    return dir;
-}
-
 
 int main() {
     printf("Hello World!\n");
