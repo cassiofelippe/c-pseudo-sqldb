@@ -5,7 +5,7 @@
 #include <dirent.h>
 #include <errno.h>
 
-// DDL = Doubly-Linked-List
+// DLL = Doubly-Linked-List
 
 #define DATA_MAX_BEFORE_POINTERS 10 // TODO use DLL
 #define MAX_INPUT_SIZE 255 // TODO use DLL
@@ -31,11 +31,16 @@ typedef struct {
     Command *last;
 } ListCommand;
 
+typedef int boolean;
+
 
 /* function declarations */
-ListCommand* get_commands();
+ListCommand* read_commands();
 void input(char *str, int max_size, FILE *stream);
 void query(char *attributes, char *database, char *filter);
+void print_command(Command *command);
+void print_all_inverted(ListCommand *list);
+void print_all(ListCommand *list);
 
 /* global vars */
 ListCommand* commands;
@@ -64,12 +69,17 @@ Command* add_command(ListCommand *list, Command *command) {
 }
 
 
+void print_command(Command *command) {
+    // printf("%d - %s %s", command->cod, command->name, command->next == NULL ? "" : "\n");
+    printf("%s %s", command->name, command->next == NULL ? "" : "\n");
+}
+
 void print_all_commands(ListCommand *list) {
     Command *aux = list->first;
 
     printf("\n");
     for (; aux != NULL; aux = aux->next) {
-        printf("%d - %s | ", aux->cod, aux->name);
+        print_command(aux);
     }
     printf("\n");
 }
@@ -80,42 +90,47 @@ void print_all_inverted(ListCommand *list) {
 
     printf("\n");
     for (; aux != NULL; aux = aux->prev) {
-        printf("%d - %s | ", aux->cod, aux->name);
+        print_command(aux);
     }
     printf("\n");
 }
 
 
-// TODO import commands from a file
-ListCommand* get_commands() {
+ListCommand* read_commands() {
+	FILE *db = fopen("system/commands", "r");
+	char ch;
+	int i = 1;
+
     ListCommand *commands = malloc(sizeof(ListCommand));
+    Command *c = malloc(sizeof(Command));
+    char *name = malloc(UNDECLARED_STRUCT_MEMBER_SIZE(Command, name));
 
-    Command *c1 = malloc(sizeof(Command));
-    c1->cod = 1;
-    strcpy(c1->name, "SELECT");
-    add_command(commands, c1);
+    while (ch != EOF) {
+        ch = fgetc(db);
 
-    Command *c2 = malloc(sizeof(Command));
-    c2->cod = 2;
-    strcpy(c2->name, "INSERT");
-    add_command(commands, c2);
+        if (ch == '\n' || ch == EOF) {
+            c->cod = i;
+            strcpy(c->name, name);
+            add_command(commands, c);
+            i++;
+            c = malloc(sizeof(Command));
+            name = malloc(UNDECLARED_STRUCT_MEMBER_SIZE(Command, name));
 
-    Command *c3 = malloc(sizeof(Command));
-    c3->cod = 3;
-    strcpy(c3->name, "UPDATE");
-    add_command(commands, c3);
+            if (ch == EOF) {
+                break;
+            }
+        } else if (ch != EOF) {
+        	strncat(name, &ch, 1);
+        }
+    }
 
-    Command *c4 = malloc(sizeof(Command));
-    c4->cod = 4;
-    strcpy(c4->name, "DELETE");
-    add_command(commands, c4);
+    fclose(db);
 
     return commands;
 }
 
 
 void user_interaction() {
-    // int command_input_size = UNDECLARED_STRUCT_MEMBER_SIZE(Command, name);
     char *command = malloc(COMMAND_MAX);
     char *attributes = malloc(COMMAND_MAX);
     char *database = malloc(COMMAND_MAX);
@@ -125,7 +140,8 @@ void user_interaction() {
     char *user_input = malloc(user_input_size);
     int i;
 
-    printf("\nRun your pseudo-SQL query: ");
+    printf("\n");
+    printf("Run your pseudo-SQL query: ");
     input(user_input, user_input_size, stdin);
 
     char *token = strtok(user_input, " ");
@@ -161,31 +177,43 @@ void user_interaction() {
     }
 
 
-    printf("\nYou ran [%s]", user_input);
+    printf("You ran [%s]\n", user_input);
 
     // TODO reduce the code below to a filter funcion
 
     Command *found_command = NULL;
     Command *aux = commands->first;
+    boolean has_found = 0;
 
     while (aux != NULL && aux->next != NULL) {
         if (strcasecmp(aux->name, command) == 0) {
             found_command = aux;
+            has_found = 1;
+            break;
         }
 
         aux = aux->next;
     }
 
-    printf("\nfound command: %d - %s", found_command->cod, found_command->name);
+    if (has_found == 0) {
+        printf("Command [%s] not found!", command);
+        user_interaction();
+        return;
+    }
+
+    printf("found command: %d - %s\n", found_command->cod, found_command->name);
 
     if (found_command == NULL) {
-        printf("\nCommand [%s] not found!", command);
+        printf("Command [%s] not found!\n", command);
     } else {
     	int swcommand = found_command->cod;
     	switch (swcommand) {
     		case 1: /* SELECT */
-    			printf("\nit is select!");
+    			printf("it is select!\n");
     			query(attributes, database, filter);
+    			break;
+    		default:
+    			printf("default (switch)\n");
     			break;
     	}
     }
@@ -193,15 +221,21 @@ void user_interaction() {
 }
 
 void query(char *attributes, char *database, char *filter) {
-	/* checking database file */
-    char *path = strcat("databases/", database);
+    /* checking database file */
+    char dbpath[] = "databases/";
+    char path[sizeof(char*) * strlen(dbpath) + strlen(database)];
+    strcat(path, dbpath);
+    strcat(path, database);
+
+    printf(">> path: %s\n", path);
+
     FILE *db = fopen(path, "r");
     char ch;
     char *header = malloc(sizeof(char) * DB_ROW_MAX);
     char rows[DB_ROW_MAX][DB_ROW_MAX];
 
     if (NULL == db) {
-        printf("\nDatabase [%s] does not exist!", path);
+        printf("Database [%s] does not exist!\n", path);
     }
  
     printf("\ncontent of this file are \n");
@@ -211,14 +245,7 @@ void query(char *attributes, char *database, char *filter) {
     while (ch != EOF) {
         ch = fgetc(db);
 
-        printf("%c", ch);
-
-        if (ch == EOF) {
-            printf("[FINAL]");
-        }
-
         if (ch == '\n') {
-            printf("[ENTER]");
             isheader = 0;
 
             rows[i][j] = '\0';
@@ -226,7 +253,6 @@ void query(char *attributes, char *database, char *filter) {
             i++;
             j = -1;
         } else if (ch != EOF) {
-        	printf("<%d>", i);
             if (isheader == 1) {
                 header[j] = ch;
             } else {
@@ -242,11 +268,13 @@ void query(char *attributes, char *database, char *filter) {
     /* closing the db table file */
     fclose(db);
 
-    printf("\n%s", header);
+    printf("%s\n", header);
 
     for (i = 0; i <= rows_length; i++) {
-    	printf("\n%s", rows[i]);
+    	printf("%s\n", rows[i]);
     }
+
+    
 }
 
 void input(char *str, int max_size, FILE *stream) {
@@ -257,9 +285,11 @@ void input(char *str, int max_size, FILE *stream) {
 int main() {
     printf("Hello World!\n");
 
-    commands = get_commands();
+    commands = read_commands();
+
+    print_all_commands(commands);
 
     user_interaction();
     
-    printf("\n");
+    printf("\nexiting...\n");
 }
