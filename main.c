@@ -144,6 +144,8 @@ void user_interaction() {
     printf("Run your pseudo-SQL query: ");
     input(user_input, user_input_size, stdin);
 
+    // printf("\n>> user input %s\n", user_input);
+
     char *token = strtok(user_input, " ");
     
     for (i = 0; token != NULL; i++) {
@@ -221,6 +223,8 @@ void user_interaction() {
     	}
     }
 
+    free(token);
+    // free();
 }
 
 void query(char *attributes, char *database, char *filter) {
@@ -236,16 +240,18 @@ void query(char *attributes, char *database, char *filter) {
     // printf(">> path: %s\n", path);
 
     FILE *db = fopen(path, "r");
-    char ch;
-    char header[DB_ROW_MAX];
-    char rows[DB_ROW_MAX][DB_ROW_MAX];
+
+    char ch = 0;
+    char header[DB_ROW_MAX] = {};
+    char rows[DB_ROW_MAX][DB_ROW_MAX] = {{}};
     /* matrix containing each item (property: value) */
-    char *map[DB_ROW_MAX][DB_ROW_MAX];
+    char *map[DB_ROW_MAX][DB_ROW_MAX] = {{}};
     /* mapping control (columns and rows) */
     int mccol = 0;
 
     if (NULL == db) {
-        printf("Database [%s] does not exist!\n", path);
+        printf("Database [%s] does not exist!\n", database);
+        return;
     }
  
     // printf(">> content of this file are\n");
@@ -278,6 +284,9 @@ void query(char *attributes, char *database, char *filter) {
  
     /* closing the db table file */
     fclose(db);
+
+    printf("\n");
+    // printf(">> header %s\n", header);
 
     /* map the header */
     char *maptoken = strtok(header, ",");
@@ -360,8 +369,6 @@ void query(char *attributes, char *database, char *filter) {
     }
 
     // printf(">> property %s, comparator %s, value %s\n", property, comparator, value);
-
-
     // printf(">> header %s\n", map[0][3]);
     
     printf("\n");
@@ -392,6 +399,9 @@ void query(char *attributes, char *database, char *filter) {
 
     printf("\n");
 
+    // free(map);
+    free(maptoken);
+    free(token);
 }
 
 void input(char *str, int max_size, FILE *stream) {
@@ -406,6 +416,7 @@ int main() {
 
     print_all_commands(commands);
 
+    user_interaction();
     user_interaction();
     
     printf("\nexiting...\n");

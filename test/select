@@ -1,1 +1,1 @@
-select * from test where name = abel
+select * from mock
