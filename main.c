@@ -170,7 +170,7 @@ void user_interaction() {
                     strcat(filter, "$");
                     strcat(filter, token);
                 }
-                printf(">> filter: %s\n", filter);
+                // printf(">> filter: %s\n", filter);
 
                 break;
         }
@@ -237,7 +237,7 @@ void query(char *attributes, char *database, char *filter) {
 
     FILE *db = fopen(path, "r");
     char ch;
-    char *header = malloc(sizeof(char) * DB_ROW_MAX);
+    char header[DB_ROW_MAX];
     char rows[DB_ROW_MAX][DB_ROW_MAX];
     /* matrix containing each item (property: value) */
     char *map[DB_ROW_MAX][DB_ROW_MAX];
@@ -363,6 +363,8 @@ void query(char *attributes, char *database, char *filter) {
 
 
     // printf(">> header %s\n", map[0][3]);
+    
+    printf("\n");
 
     /* print the header */
     for (i = 0; map[0][i] != NULL; i++) {

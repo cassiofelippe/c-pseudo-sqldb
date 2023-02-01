@@ -11,6 +11,16 @@ to execute the program, run the following command
 clear;clear;gcc main.c -Wall -o main && ./main < test/select
 ```
 
+# what's working?
+for now, only the `SELECT` command is working, and with it a single filter possibility  
+eg.:
+```sql
+SELECT * FROM test
+``` 
+```sql
+SELECT * FROM people WHERE birth = 1998
+``` 
+
 
 # TODO list
 - use doubly-link-list for everything in there, in order to avoid allocating unused memory
